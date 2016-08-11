@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<!-- DataFromWebServiceDemo.html -->
+
+<html>
+  <head>
+    <title>Bing Maps 8 Data From Web Service</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <script type="text/javascript"
+      src="http://code.jquery.com/jquery-latest.min.js"> </script>
+    <script type='text/javascript'>
+
+    var map = null;
+    var pushpins = [];
+    var infobox = null;
+    var ppLayer = null;
+
+    function GetMap()
+    {
+      var options = {
+        credentials: "Anw _ _ _ 3xt",
+        center: new Microsoft.Maps.Location(35.80, -78.80),
+        mapTypeId: Microsoft.Maps.MapTypeId.road,
+        zoom: 10,
+        enableClickableLogo: false,
+        showTermsLink: false
+      };
+
+      var mapDiv = document.getElementById("mapDiv");
+      map = new Microsoft.Maps.Map(mapDiv, options);
+
+      infobox = new Microsoft.Maps.Infobox(new Microsoft.Maps.Location(0, 0),
+        { visible: false, offset: new Microsoft.Maps.Point(0,0) });
+      infobox.setMap(map);
+
+      ppLayer = new Microsoft.Maps.Layer();
+      var cpp= new Microsoft.Maps.Pushpin(map.getCenter(), null);
+      ppLayer.add(cpp);
+      map.layers.insert(ppLayer);
+    }
+
+    function WriteLn(txt)
+    {
+      var existing = msgArea.value;
+      msgArea.value = existing + txt + "\n";
+    }
+
+    function LatLonStr(loc)
+    {
+      var s = "(" + Number(loc.latitude).toFixed(2) + ", " +
+        Number(loc.longitude).toFixed(2) + ")";
+      return s;
+    }
+
+    $(document).ready(function() {
+      $("#button1").click(function() {
+        var urlVal = $("#textbox1").val();
+        WriteLn("Fetching data from: \n");
+        WriteLn(urlVal + "\n");
+
+        var radius = parseInt((textbox2.value).split('=')[1]);
+        var pinkDot = CreateSvgDot(radius, "DeepPink");
+        
+        $.ajax({
+          url: urlVal,
+          dataType: "text",
+          success: function (data) {
+            WriteLn("Retrieved data is: \n");
+            WriteLn(data);
+            var parsed = JSON.parse(data);
+            var len = parsed.d.length;
+            for (var i = 0; i < len; ++i) {
+              var loc = new Microsoft.Maps.Location(parsed.d[i].lat,
+                parsed.d[i].lon);
+
+              var ppOptions = { icon: pinkDot,
+                anchor: new Microsoft.Maps.Point(radius,radius) };
+
+              var pp = new Microsoft.Maps.Pushpin(loc, ppOptions);
+              pp.metadata = parsed.d[i].desc;
+              pushpins[i] = pp;
+              Microsoft.Maps.Events.addHandler(pp, 'click', ShowInfobox);
+            }
+            ppLayer.add(pushpins);
+            map.layers.insert(ppLayer);
+          }
+        });
+      });
+    });
+
+    function ShowInfobox(e)
+    {
+      var loc = e.target.getLocation();
+      WriteLn('\nmouse click at ' + LatLonStr(loc));
+      infobox.setLocation(loc);
+      infobox.setOptions({ visible: true,
+        title: e.target.metadata,
+        description: LatLonStr(loc)
+      });
+    }
+
+    function CreateSvgDot(radius, clr)
+    {
+      var s = '<svg xmlns="http://www.w3.org/2000/svg"';
+           s += ' width="' + radius * 2 +'"';
+      s += ' height="' + radius * 2 + '"';
+      s += '>';      
+      s += '<circle cx="' + radius + '"';
+      s += ' cy="' + radius + '"';
+      s += ' r="' + radius + '"';
+      s += ' fill="' + clr + '"';
+      s += ' /></svg>';
+      return s;
+    }
+
+    </script>
+  </head>
+
+  <body style="background-color:aquamarine">
+    <div id='controlPanel' style="float:left; width:262px; height:580px;
+      border:1px solid green; padding:10px; background-color: beige">
+      
+      <input id="textbox1" type="text" size="38"
+        value="http://localhost/Succinctly/LatLonData.json"></input>
+      <span style="display:block; height:10px"></span> 
+
+      <input id="button1" type='button' style="width:125px;"
+        value='Get Pushpins' onclick="Button1_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox2" type='text' size='15'
+        value='radius=8'></input><br/>
+      <span style="display:block; height:10px"></span> 
+
+      <textarea id='msgArea' rows="36" cols="36" style="font-family:Consolas;
+        font-size:12px"></textarea>
+    </div>
+
+    <div style="float:left; width:10px; height:600px"></div> 
+    <div id='mapDiv' style="float:left; width:700px; height:600px;
+      border:1px solid red;">
+    </div>
+    <br style="clear: left;" />
+ 
+    <script type='text/javascript'
+      src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap'
+      async defer>
+    </script>
+
+  </body>
+</html>

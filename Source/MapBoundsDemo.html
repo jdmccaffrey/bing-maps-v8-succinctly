@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<!-- MapBoundsDemo.html -->
+
+<html>
+  <head>
+    <title>Bing Maps 8 Map Bounds Demo</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <script type='text/javascript'
+      src='http://www.bing.com/api/maps/mapcontrol'>
+    </script> 
+
+    <script type="text/javascript">
+
+    var map = null;
+    var zoomLev;
+    var mapCtr = null;
+    
+    function GetMap()
+    {
+      var options = {
+        credentials: "Anw _ _ _ 3xt",
+        center: new Microsoft.Maps.Location(55.80, 37.60),
+        mapTypeId: Microsoft.Maps.MapTypeId.road,
+        zoom: 10,
+        enableClickableLogo: false,
+        showTermsLink: false
+      };
+
+      var mapDiv = document.getElementById("mapDiv");
+      map = new Microsoft.Maps.Map(mapDiv, options);
+      zoomLev = map.getZoom();
+      mapCtr = map.getCenter();
+      WriteLn("\nInitial zoom = " + zoomLev);
+      WriteLn("Initial center = " + LatLonStr(mapCtr));     
+
+      Microsoft.Maps.Events.addHandler(map, 'viewchangeend', ViewChanged);
+
+      Microsoft.Maps.loadModule("Microsoft.Maps.SpatialMath",
+        function () {
+          WriteLn("\nSpatialMath module loaded");
+        });
+    }
+
+    function ViewChanged()
+    {
+      var z = map.getZoom();
+      var mc = map.getCenter();
+
+      if (z != zoomLev) {
+        WriteLn("\nNew zoom level = " + z);
+        zoomLev = z; 
+
+        var bounds = map.getBounds();
+        var se = bounds.getSoutheast();
+        var s = bounds.getSouth();
+        var w = bounds.getWest();
+        var sw = new Microsoft.Maps.Location(s, w);
+        var inMiles = Microsoft.Maps.SpatialMath.DistanceUnits.Miles;
+        var widthOfMap =
+          Microsoft.Maps.SpatialMath.getDistanceTo(se, sw, inMiles);
+        WriteLn("New width in miles = " + Number(widthOfMap).toFixed(1)); 
+      }
+
+      if (mc.latitude != mapCtr.latitude || mc.longitude != mapCtr.longitude) {
+        WriteLn("\nNew center = " + LatLonStr(mc));
+        mapCtr = mc;
+      }
+
+    }
+
+    function WriteLn(txt)
+    {
+      var existing = msgArea.value;
+      msgArea.value = existing + txt + "\n";
+    }
+
+    function LatLonStr(loc)
+    {
+      var s = "(" + Number(loc.latitude).toFixed(2) + ", " +
+        Number(loc.longitude).toFixed(2) + ")";
+      return s;
+    }
+
+    function Button1_Click()
+    {
+      var bounds = map.getBounds();
+
+      var ctr = bounds.center;
+      var wid = bounds.width;
+      var ht = bounds.height;
+
+      WriteLn("\nMap bounds center = " + LatLonStr(ctr));
+      WriteLn("Map bounds width  = " + Number(wid).toFixed(2) + " degrees");
+      WriteLn("Map bounds height = " + Number(ht).toFixed(2) + " degrees");
+
+      var strLoc = textbox1.value;
+      var latLon = strLoc.split(',');
+      var lat = latLon[0];
+      var lon = latLon[1];
+      var loc = new Microsoft.Maps.Location(lat, lon);
+      var b = bounds.contains(loc);
+      
+      WriteLn("Map contains " + LatLonStr(loc) + " = " + b);
+    }
+
+    </script>
+  </head>
+
+  <body onload="GetMap();" style="background-color:coral">
+    <div id='controlPanel' style="float:left; width:262px; height:580px;
+      border:1px solid green; padding:10px; background-color: beige">
+
+      <input id="button1" type='button' style="width:125px;"
+        value='Get Bounds' onclick="Button1_Click();"></input>
+      <div style="width:2px; display:inline-block"></div>
+      <input id="textbox1" type='text' size='15'
+        value='35.50,22.50'></input><br/>
+      <span style="display:block; height:15px"></span>
+
+      <textarea id='msgArea' rows="38" cols="36" style="font-family:Consolas;
+        font-size:12px"></textarea>
+    </div>
+
+    <div style="float:left; width:10px; height:600px"></div>
+    <div id='mapDiv' style="float:left; width:700px; height:600px;
+      border:1px solid red;"></div>
+    <br style="clear: left;" /> 
+
+  </body>
+</html>

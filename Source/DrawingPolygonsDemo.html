@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<!-- DrawingPolygonsDemo.html -->
+
+<html>
+  <head>
+    <title>Bing Maps 8 Drawing Polygons</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <script type='text/javascript'>
+
+    var map = null;
+    var ppLayer = null; 
+
+    var drawMgr = null;
+    var drawnShapes = [];
+
+    function GetMap()
+    {
+      var options = {
+        credentials: "Anw _ _ _ 3xt",
+        center: new Microsoft.Maps.Location(39.00, -94.50),
+        mapTypeId: Microsoft.Maps.MapTypeId.road,
+        zoom: 10,
+        enableClickableLogo: false,
+        showCopyright: false
+      };
+
+      var mapDiv = document.getElementById("mapDiv"); 
+      map = new Microsoft.Maps.Map(mapDiv, options); 
+
+      ppLayer = new Microsoft.Maps.Layer();
+      WriteLn("\nPlacing default pp at " + LatLonStr(map.getCenter()));
+      var cpp = new Microsoft.Maps.Pushpin(map.getCenter(), null);
+      ppLayer.add(cpp);
+      
+      WriteLn("Placing green triangle");
+      var v0 = new Microsoft.Maps.Location(39.00, -94.88);
+      var v1 = new Microsoft.Maps.Location(38.94, -94.90);
+      var v2 = new Microsoft.Maps.Location(38.94, -94.86);
+      var arr = [];
+      arr.push(v0); arr.push(v1); arr.push(v2);
+      var triangle = new Microsoft.Maps.Polygon(arr, null);
+      ppLayer.add(triangle);
+      map.layers.insert(ppLayer);
+
+      var triangleLocs = triangle.getLocations();
+      for (var i = 0; i < triangleLocs.length; ++i) {
+        WriteLn(LatLonStr(triangleLocs[i]));
+      }
+
+      Microsoft.Maps.loadModule('Microsoft.Maps.DrawingTools',
+        function() {
+          var tools = new Microsoft.Maps.DrawingTools(map);
+          tools.showDrawingManager(AddDrawControlEvents);
+        });
+    }
+
+    function AddDrawControlEvents(manager)
+    {
+      Microsoft.Maps.Events.addHandler(manager, 'drawingStarted',
+        function() { WriteLn('\nDrawing has started');  });
+      Microsoft.Maps.Events.addHandler(manager, 'drawingEnded',
+        function(e) { WriteLn('Drawing has ended'); });
+      drawMgr = manager;  // save for get-shapes-info function
+    }
+
+    function WriteLn(txt)
+    {
+      var existing = msgArea.value;
+      msgArea.value = existing + txt + "\n";
+    }
+
+    function LatLonStr(loc)
+    {
+      var s = "(" + Number(loc.latitude).toFixed(2) + ", " +
+        Number(loc.longitude).toFixed(2) + ")";
+      return s;
+    }
+
+    function Button1_Click()
+    {
+      drawnShapes = drawMgr.getPrimitives();
+      var numShapes = drawnShapes.length;
+      var mostRecent = drawnShapes[numShapes-1]; 
+      
+      WriteLn("\nThere are " + numShapes + " user-drawn shapes");
+      var isPoly = (mostRecent instanceof Microsoft.Maps.Polygon);
+      var isPushpin = (mostRecent instanceof Microsoft.Maps.Pushpin);
+
+      if (isPoly == true) {
+        WriteLn("\nVertices of most recent drawn shape: ");
+        var vertices = mostRecent.getLocations();
+        for (var i = 0; i < vertices.length; ++i) {
+          WriteLn(LatLonStr(vertices[i]));
+        }
+        WriteLn("");
+      }
+      else if (isPushpin == true) {
+        WriteLn("\nLocation of most recent pushpin: ");
+        var loc = mostRecent.getLocation();
+        WriteLn("loc = " + loc);
+      }
+    }
+
+    function Button2_Click()
+    {
+      drawMgr.clear();  // drawn shapes
+      ppLayer.clear();  // other shapes
+    }
+
+    </script>
+  </head>
+
+  <body style="background-color:#9ACD32">
+    <div id='controlPanel' style="float:left; width:262px; height:580px;
+      border:1px solid green; padding:10px; background-color: beige">
+      
+      <input id="button1" type='button' style="width:125px;"
+        value='Drawn Shape Info' onclick="Button1_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox1" type='text' size='15'
+        value=' (not used)'> </input><br/>
+      <span style="display:block; height:10px"></span> 
+
+      <input id="button2" type='button' style="width:125px;"
+        value='Erase All Shapes' onclick="Button2_Click();"></input>
+      <div style="width:2px; display:inline-block"></div>  
+      <input id="textbox2" type='text' size='15'
+        value=' (not used)'></input><br/>
+      <span style="display:block; height:10px"></span>
+
+      <textarea id='msgArea' rows="36" cols="36" style="font-family:Consolas;
+        font-size:12px"></textarea>
+    </div>
+
+    <div style="float:left; width:10px; height:600px"></div> 
+    <div id='mapDiv' style="float:left; width:700px; height:600px;
+      border:1px solid red;"></div>
+    <br style="clear: left;" /> 
+
+    <script type='text/javascript'
+      src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap'
+      async defer>
+    </script>
+
+  </body>
+</html>

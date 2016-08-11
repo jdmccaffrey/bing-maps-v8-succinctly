@@ -1,0 +1,4 @@
+42.36,-71.70,first location data,red
+42.28,-71.70,second location data,blue
+42.32,-71.74,third location data,lime
+42.32,-71.66,fourth location data,cyan

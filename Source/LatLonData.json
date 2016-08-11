@@ -1,0 +1,5 @@
+{ "d" :
+  [{ "lat":35.76, "lon":-79.20, "desc":"top-most data" },
+   { "lat":35.68, "lon":-79.20, "desc":"bottom-most data" },
+   { "lat":35.72, "lon":-79.24, "desc":"left-most data" },
+   { "lat":35.72, "lon":-79.16, "desc":"right-most data" } ]}

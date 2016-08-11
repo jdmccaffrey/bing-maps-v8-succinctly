@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<!-- CustomInfoboxDemo.html -->
+
+<html>
+  <head>
+    <title>Bing Maps 8 Custom Infobox Demo</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
+
+    <script type='text/javascript'>
+
+    var map = null;
+    var ctr = null;
+    var pushpins = [];
+    var ppLayer = null;
+    var infobox = null;
+    var ibTemplate = null;
+
+    function GetMap()
+    {
+      var options = {
+        credentials: "Anw _ _ _ 3xt",
+        center: new Microsoft.Maps.Location(45.50, -122.50),  // Portland, OR
+        mapTypeId: Microsoft.Maps.MapTypeId.road,
+        zoom: 10,
+        enableClickableLogo: false,
+        showTermsLink: false
+      };
+
+      var mapDiv = document.getElementById("mapDiv"); 
+      map = new Microsoft.Maps.Map(mapDiv, options);
+      ctr = map.getCenter(); 
+      
+      ppLayer = new Microsoft.Maps.Layer();
+
+      ibTemplate = '<div id="ibBox" style="border-radius: 10px 10px 10px 0px;' +
+        ' background-color:beige; border-style:solid; border-width:medium;' +
+        ' border-color:magenta; min-height: 90px; width: 140px; ">' +
+        ' <b id="ibTitle" style="position: absolute; top: 10px; left: 10px;' +
+        ' width: 220px; font-family:Arial; font-size:small">{title}</b>' +
+        ' <a id="ibDesc" style="position: absolute; top: 30px; left: 10px;' +
+        ' width: 220px; font-size:small">{description}</a></div>';
+ 
+      infobox = new Microsoft.Maps.Infobox(ctr, {
+        visible: false,
+        htmlContent: ibTemplate.replace('{title}',
+          'dummy title').replace('{description}', 'dummy description')
+      });
+
+      infobox.setMap(map);
+    }
+
+    function ShowInfobox(e)
+    {
+      var loc = e.target.getLocation();
+      infobox.setLocation(loc);
+      WriteLn('\nmouseover at ' + LatLonStr(loc));
+      infobox.setOptions({
+        visible: true,
+        offset: new Microsoft.Maps.Point(2, 2),
+        htmlContent: ibTemplate.replace('{title}',
+          'I am a ' + e.targetType + ' at').replace('{description}',
+          LatLonStr(loc)) });
+    }
+
+    function HideInfobox(e)
+    {
+      infobox.setOptions({ visible: false });
+    }
+
+    function Button1_Click()
+    {
+      var count = parseInt(textbox1.value);
+      var locs = MakeLocs(count, map.getBounds(), 19);
+
+      var orangeDot = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAw' + 
+        'AAAAMCAYAAABWdVznAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5cc' +
+        'llPAAAAIxJREFUeNpiZICCD766CkCqHogDgFgAJgzEG4C4UWDz5QcgAUaoYgMgt' +
+        'R9JIToAaXQEarrACDX5PB7FyJoMmaDOIKSYAaqmngnqZmJBABORpsNtYWIgETBB' +
+        'PUMs+MAEDWdiwQaQhkYibQGpaWSCxqAjAU2wiHsA9jQoBkGRAsQL0DR+gIoZQtU' +
+        'wAAQYAGgpKDzqLFoIAAAAAElFTkSuQmCC'; 
+
+      var ppOptions = { icon: orangeDot,
+        anchor: new Microsoft.Maps.Point(6, 6) };
+      
+      for (var i = 0; i < count; ++i) {
+        var pp = new Microsoft.Maps.Pushpin(locs[i], ppOptions);
+        Microsoft.Maps.Events.addHandler(pp, 'mouseover', ShowInfobox);
+        Microsoft.Maps.Events.addHandler(pp, 'mouseout', HideInfobox);
+        pushpins[i] = pp;
+      }
+
+      ppLayer.add(pushpins);
+      map.layers.insert(ppLayer);
+    }
+
+    function Button2_Click()
+    {
+      ppLayer.clear();
+    }
+
+    function MakeLocs(n, bounds, sd)
+    {
+      Math.myRandom = SetSeed(sd);
+      var latHi = bounds.getNorth();
+      var latLo = bounds.getSouth();
+      var lonHi = bounds.getEast();
+      var lonLo = bounds.getWest();
+     
+      var result = [];
+      for (var i = 0; i < n; ++i) {
+        var lat = (latHi - latLo) * Math.myRandom() + latLo;
+        var lon = (lonHi - lonLo) * Math.myRandom() + lonLo;
+        var loc = new Microsoft.Maps.Location(lat, lon);
+        result.push(loc);
+      }
+      return result;
+    }
+
+    SetSeed = function(seed) {
+      if (seed <= 0) {
+        alert('Bad seed');
+      }
+
+      function ParkMiller() {
+        var hi = Math.floor(seed / 127773);
+        var lo = seed % 127773;
+        seed = (16807 * lo) - (2836 * hi); // global
+        if (seed <= 0) {
+          seed += 2147483647;
+        }
+        return seed / 2147483647;
+      }
+  
+      for (var i = 0; i < 20; ++i) {  // burn away first 20 results
+        var dummy = ParkMiller();
+      }
+      return ParkMiller;
+    }
+
+
+    function WriteLn(txt)
+    {
+      var existing = msgArea.value;
+      msgArea.value = existing + txt + "\n";
+    }
+
+    function LatLonStr(loc)
+    {
+      var s = "(" + Number(loc.latitude).toFixed(2) + ", " +
+        Number(loc.longitude).toFixed(2) + ")";
+      return s;
+    }
+
+    </script>
+  </head>
+
+  <body style="background-color:goldenrod">
+    <div id='controlPanel' style="float:left; width:262px; height:580px;
+      border:1px solid green; padding:10px; background-color: beige">
+      
+      <input id="button1" type='button' style="width:125px;"
+        value=' Make  Pushpins ' onclick="Button1_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox1" type='text' size='15'
+        value='30'></input><br/>
+      <span style="display:block; height:10px"></span> 
+
+      <input id="button2" type='button' style="width:125px;"
+        value=' Clear Pushpins ' onclick="Button2_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox2" type='text' size='15'
+        value=' (not used) '></input><br/>
+      <span style="display:block; height:10px"></span>
+
+      <textarea id='msgArea' rows="36" cols="36" style="font-family:Consolas;
+        font-size:12px"></textarea>
+    </div>
+
+    <div style="float:left; width:10px; height:600px"></div>
+    <div id='mapDiv' style="float:left; width:700px; height:600px;
+      border:1px solid red;"></div>
+    <br style="clear: left;" />
+ 
+    <script type='text/javascript'
+      src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap'
+      async defer>
+    </script>
+
+  </body>
+</html>

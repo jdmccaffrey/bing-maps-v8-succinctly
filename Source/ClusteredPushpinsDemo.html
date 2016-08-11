@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<!-- GeoSearchDemo.html -->
+
+<html>
+  <head>
+    <title>Bing Maps 8 Geo Search Demo</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <script type="text/javascript">
+
+      var map = null;
+      var ppLayer = null;
+      var geoShapeLayer = null;
+      var geoResult = null;
+
+    function GetMap()
+    {
+      var options = {
+        credentials: "Anw _ _ _ 3xt",
+        center: new Microsoft.Maps.Location(39.80, -98.60),
+        mapTypeId: Microsoft.Maps.MapTypeId.road,
+        zoom: 3,
+        enableClickableLogo: false,
+        showTermsLink: false
+      };
+
+      var mapDiv = document.getElementById("mapDiv");
+      map = new Microsoft.Maps.Map(mapDiv, options);
+
+      Microsoft.Maps.Events.addHandler(map, 'viewchangeend', ViewChanged);
+
+      ppLayer = new Microsoft.Maps.Layer();
+      var cpp= new Microsoft.Maps.Pushpin(map.getCenter(), {color: 'green'}); 
+      ppLayer.add(cpp);
+      map.layers.insert(ppLayer);
+
+      geoShapeLayer = new Microsoft.Maps.Layer();
+    }
+
+    function ViewChanged(e)
+    {
+      var z = map.getZoom();
+      WriteLn('\nzoom level = ' + z);
+    }
+    
+    function WriteLn(txt)
+    {
+      var existing = msgArea.value;
+      msgArea.value = existing + txt + "\n";
+    }
+
+    function Button1_Click(e)
+    {
+      var city = textbox1.value;
+      textbox2.value = city;  // echo
+      WriteLn("Fetching geo data for \n" + city.toString());
+  
+      Microsoft.Maps.loadModule('Microsoft.Maps.Search', function() {
+        var searchManager = new Microsoft.Maps.Search.SearchManager(map);
+        var geoRequest = {
+          where: city,
+          callback: function(res) {
+            geoResult = res;  // save for use by the outliner function
+            if (res && res.results && res.results.length > 0) {
+              map.setView({ bounds: res.results[0].bestView });
+              WriteLn("Map auto centered at " +
+                LatLonStr(map.getCenter()));
+            } 
+          } 
+        }; 
+        searchManager.geocode(geoRequest);  // do an async request
+      }); 
+    }
+
+    function Button2_Click(e)
+    {
+      var city = textbox1.value;
+      WriteLn('\nParsing out Polygon data');
+      WriteLn('Using Polygon data to color map');
+
+      var geoOptions = { entityType: 'PopulatedPlace',
+        getAllPolygons: true };
+
+      Microsoft.Maps.loadModule('Microsoft.Maps.SpatialDataService',
+        function() {
+          var apimgr = Microsoft.Maps.SpatialDataService.GeoDataAPIManager;
+          apimgr.getBoundary(geoResult.results[0].location, geoOptions, map,
+            function(data) {
+              if (data.results && data.results.length > 0) {
+                geoShapeLayer.add(data.results[0].Polygons);
+                map.layers.insert(geoShapeLayer);
+              }
+            });
+        });
+    }
+
+    function LatLonStr(loc)
+    {
+      var s = "(" + Number(loc.latitude).toFixed(2) + ", " +
+        Number(loc.longitude).toFixed(2) + ")";
+      return s;
+    }
+    
+    </script>
+  </head>
+
+  <body onload="GetMap();" style="background-color:lightpink">
+    <div id='controlPanel' style="float:left; width:262px; height:580px;
+      border:1px solid green; padding:10px; background-color: beige">
+
+      <input id="button1" type='button' value='Go To' style="width:120px;"
+        onclick="Button1_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox1" type='text' size='16' value='Boulder, CO'>
+        </input><br/>
+      <span style="display:block; height:10px"></span> 
+
+      <input id="button2" type='button' value='Outline It'
+        style="width:120px;" onclick="Button2_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox2" type='text' size='16' value=''></input><br/>
+      <span style="display:block; height:10px"></span>  
+
+      <textarea id='msgArea' rows="36" cols="36" style="font-family:Consolas;
+        font-size:12px"></textarea>
+    </div>
+    <div style="float:left; width:10px; height:600px"></div>
+    <div id='mapDiv' style="float:left; width:700px; height:600px;
+      border:1px solid red;"></div>
+    <br style="clear: left;" />
+
+    <script type='text/javascript'
+      src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap'
+      async defer>
+    </script>
+
+  </body>
+</html>

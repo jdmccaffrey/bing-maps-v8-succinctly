@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<!-- InputOutputDemo.html -->
+
+<html>
+  <head>
+    <title>Bing Maps 8 Input and Output</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script type='text/javascript'>
+
+    var map = null;
+
+    function GetMap()
+    {
+      var options = {
+        credentials: "Anw _ _ _ 3xt",
+        center: new Microsoft.Maps.Location(35.00, -100.00),
+        mapTypeId: Microsoft.Maps.MapTypeId.road,
+        zoom: 2,
+        enableClickableLogo: false,
+        showCopyright: false
+      };
+
+      var mapDiv = document.getElementById("mapDiv");
+      map = new Microsoft.Maps.Map(mapDiv, options);
+      Microsoft.Maps.Events.addHandler(map, 'click', MapClicked);
+    }
+
+    function WriteLn(txt)
+    {
+      var existing = msgArea.value;
+      msgArea.value = existing + txt + "\n";
+    }
+
+    function Button1_Click()
+    {
+      var z = parseInt(textbox1.value);
+      WriteLn("\nSetting zoom to " + z);
+      map.setView({ zoom: z });
+    }
+
+    function MapClicked(e)
+    {
+      var tt = e.targetType;
+      WriteLn("\nDetected click on " + tt.toString());
+      var loc = e.location;
+      WriteLn("Click at " + loc);
+    }
+
+    </script>
+  </head>
+
+  <body style="background-color:yellow">
+    <div id='controlPanel' style="float:left; width:262px; height:580px;
+      border:1px solid green; padding:10px; background-color: beige">
+      <input id="button1" type='button' style="width:125px;"
+        value=' Set Zoom' onclick="Button1_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox1" type='text' size='15' value=' 5'>
+        </input><br/>
+      <span style="display:block; height:10px"></span> 
+
+      <textarea id='msgArea' rows="38" cols="36" style="font-family:Consolas;
+        font-size:12px"></textarea>
+    </div>
+
+    <div style="float:left; width:10px; height:600px"></div>
+
+    <div id='mapDiv' style="float:left; width:700px; height:600px;
+      border:1px solid red;"></div>
+    <br style="clear: left;" />
+
+
+   <script type='text/javascript'
+     src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap'
+     async defer>
+   </script>
+
+  </body>
+</html>

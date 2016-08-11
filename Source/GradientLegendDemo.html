@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<!-- GradientLegendDemo.html -->
+
+<html>
+  <head>
+    <title>Bing Maps 8 Gradient Legend Demo</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <script type='text/javascript'>
+
+    var map = null;
+    var ppLayer = null;  // pushpin layer
+    var legendLayer = null;
+    var stateLayer = null;
+
+    var legend = null;
+    var legendImageInfo = null;
+
+    var colorado =
+      'GEOMETRYCOLLECTION( POLYGON ((-102 41, -109 41, -109 37,' +
+      '-102 37, -102 41)) )';
+
+    function GetMap()
+    {
+      var options = {
+        credentials: "Anw _ _ _ 3xt",
+        center: new Microsoft.Maps.Location(38.00, -105.00),
+        mapTypeId: Microsoft.Maps.MapTypeId.road,
+        zoom: 6,
+        enableClickableLogo: false,
+        showCopyright: false
+      };
+
+      var mapDiv = document.getElementById("mapDiv");
+      map = new Microsoft.Maps.Map(mapDiv, options); 
+
+      Microsoft.Maps.Events.addHandler(map, 'viewchangeend', ViewChanged); 
+
+      ppLayer = new Microsoft.Maps.Layer();
+      var cpp= new Microsoft.Maps.Pushpin(map.getCenter(), null);
+      ppLayer.add(cpp);
+      map.layers.insert(ppLayer);
+
+      legendLayer = new Microsoft.Maps.Layer();
+      CreateLegend();
+      var legendOpt = { icon: legend,
+        anchor: new Microsoft.Maps.Point(-10,-10) };
+      var bounds = map.getBounds();
+      var nw = bounds.getNorthwest();
+
+      var legendPp = new Microsoft.Maps.Pushpin(nw, legendOpt);
+      legendLayer.add(legendPp);
+      map.layers.insert(legendLayer);
+
+      stateLayer = new Microsoft.Maps.Layer();
+    }
+
+    function ViewChanged(e)
+    {
+      // relocate legend
+      legendLayer.clear();
+      var legendOpt = { icon: legend,
+        anchor: new Microsoft.Maps.Point(-10,-10) };
+      var bounds = map.getBounds();
+      var nw = bounds.getNorthwest();
+      var legendPp = new Microsoft.Maps.Pushpin(nw, legendOpt);
+      legendLayer.add(legendPp);
+      map.layers.insert(legendLayer);
+    }
+
+    function WriteLn(txt)
+    {
+      var existing = msgArea.value;
+      msgArea.value = existing + txt + "\n";
+    }
+
+    function Button1_Click()
+    {
+      // get color associate with a value
+      var maxValue = 100;
+      var v = parseInt(textbox1.value);
+      var color = GetLegendColor(v, maxValue);
+      WriteLn("value = " + v);
+      WriteLn("color = " + color.toString());
+      WriteLn("");
+    }
+
+    function CreateLegend()
+    {
+      // create, save a legend as png for use as a custom pushpin
+      var c = document.createElement('canvas');
+      c.width = 200;
+      c.height = 20;
+      var ctx = c.getContext("2d");
+      var grd = ctx.createLinearGradient(0, 0, c.width, 0);
+      grd.addColorStop(0.0, "purple");
+      grd.addColorStop(0.25, "blue");
+      grd.addColorStop(0.50, "green");
+      grd.addColorStop(0.75, "yellow");
+      grd.addColorStop(1.0, "red");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, c.width, c.height);  // rectangle fills canvas
+      ctx.font = "12px Arial";
+      ctx.fillStyle = "white";
+      ctx.fillText("100", 175, 15);
+      ctx.fillText("0", 10, 15);
+      legendImageInfo = ctx.getImageData(0, 0, c.width, 1);  // save pixel info
+      legend = c.toDataURL();  // save as png for custom pp
+    }
+
+    function GetLegendColor(value, maxValue)
+    {
+      value = (value > maxValue) ? maxValue : value;
+      var idx = Math.round((value / maxValue) * 200) * 4 - 4;
+      if (idx < 0) {
+        idx = 0;
+      }
+      return 'rgba(' + legendImageInfo.data[idx] + ',' +
+        legendImageInfo.data[idx + 1] + ',' +
+        legendImageInfo.data[idx + 2] + ',' + '0.2)';
+    }
+
+    function Button2_Click()
+    {
+      var colorVal = parseInt(textbox2.value);
+      var colorRgba = GetLegendColor(colorVal, 100);
+
+      Microsoft.Maps.loadModule('Microsoft.Maps.WellKnownText', function () {
+        var geoColl = Microsoft.Maps.WellKnownText.read(colorado,
+          { polygonOptions: { fillColor: colorRgba } });
+
+        for (var i = 0; i < geoColl.length; ++i) {
+          stateLayer.add(geoColl[i]);
+        }
+        map.layers.insert(stateLayer);
+      });      
+    }
+
+    </script>
+  </head>
+
+  <body style="background-color:lightgreen">
+    <div id='controlPanel' style="float:left; width:262px; height:580px;
+      border:1px solid green; padding:10px; background-color: beige">
+
+      <input id="button1" type='button' style="width:125px;"
+        value=' Decode Color ' onclick="Button1_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox1" type='text' size='15' value=' 50.0 '></input><br/>
+      <span style="display:block; height:10px"></span> 
+
+      <input id="button2" type='button' style="width:125px;"
+        value='Color Colorado' onclick="Button2_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox2" type='text' size='15' value=' 50.0 '></input><br/>
+      <span style="display:block; height:10px"></span> 
+
+      <textarea id='msgArea' rows="36" cols="36" style="font-family:Consolas;
+        font-size:12px"></textarea>
+    </div>
+
+    <div style="float:left; width:10px; height:600px"></div> 
+    <div id='mapDiv' style="float:left; width:700px; height:600px;
+      border:1px solid red;"></div>
+    <br style="clear: left;" /> 
+
+   <script type='text/javascript'
+     src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap'
+     async defer>
+    </script>
+
+  </body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<!-- HeatMapDemo.html -->
+<html>
+  <head>
+    <title>Bing Maps 8 Heat Map Demo</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
+
+    <script type='text/javascript'>
+
+      var map = null;
+      var ppLayer = null;  // pushpin layer
+      var hmLayer = null;  // heat map layer
+      var reader = null;   // FileReader object
+      var locs = [];       // lat-lon locations
+      var cGrad = { '0.0': 'black', '0.2': 'purple', '0.4': 'blue',
+       '0.6': 'green', '0.8': 'yellow', '0.9': 'orange',
+       '1.0': 'rgb(255,0,0)' };
+      var hmOptions = { intensity: 0.65, radius: 7, colorGradient: cGrad };
+      
+    function GetMap()
+    {
+      var options = {
+        credentials: "Anw _ _ _ 3xt",
+        center: new Microsoft.Maps.Location(37.50, -118.00),
+          mapTypeId: Microsoft.Maps.MapTypeId.road,
+        zoom: 6, enableClickableLogo: false, showCopyright: false
+      };
+
+      var mapDiv = document.getElementById("mapDiv");  // where to place map
+      map = new Microsoft.Maps.Map(mapDiv, options);   // display the map
+
+      ppLayer = new Microsoft.Maps.Layer();
+      var cpp = new Microsoft.Maps.Pushpin(map.getCenter(), null);  // center pp
+      ppLayer.add(cpp);
+      map.layers.insert(ppLayer);
+    }
+
+    function Button1_Click()
+    {
+      if (reader == null || locs.length == 0) {
+        LoadLocs();
+      }
+    }
+
+    function LoadLocs()
+    {
+      var f = file1.files[0];  // get filename
+      WriteLn('Loading data from ' + f.name + "\n");
+      reader = new FileReader();
+      reader.onload = function(e) {  // after file is read . . 
+        var lines = reader.result.split('\n');  // array of lines
+        for (var i = 0; i < lines.length; ++i) {  // each line
+          var line = lines[i];
+          var tokens = line.split('\t');  // split on tabs
+          try {
+            var loc = new Microsoft.Maps.Location(tokens[12], tokens[13]);
+            locs[i] = loc; 
+          } 
+          catch (err)  {
+            WriteLn(err + " " + line);
+          }
+        }
+
+        Microsoft.Maps.loadModule('Microsoft.Maps.HeatMap', function () {
+          hmLayer = new Microsoft.Maps.HeatMapLayer(locs, hmOptions);
+          map.layers.insert(hmLayer);
+        });
+
+      }
+      reader.readAsText(f);  // read the file asynchronously
+    }
+    
+    function Button2_Click()
+    {
+      WriteLn('Clearing heat map' + "\n");
+      hmLayer.clear();
+      reader = null;
+      locs = [];
+    }
+
+    function WriteLn(txt)
+    {
+      var existing = msgArea.value;
+      msgArea.value = existing + txt + "\n";
+    }
+
+    </script>
+
+    </head>
+    <body style="background-color:paleturquoise">
+
+      <div id='controlPanel' style="float:left; width:262px; height:580px;
+        border:1px solid green; padding:10px; background-color: beige">
+        <input type="file" id="file1" size="24">
+        <span style="display:block; height:10px"></span> 
+
+        <input id="button1" type='button' value='Show Heat Map' 
+          style="width:120px;" onclick="Button1_Click();"></input>
+        <div style="width:2px; display:inline-block"></div> 
+        <input id="textbox1" type='text' size='16' value=' (not used) '>
+          </input><br/>
+        <span style="display:block; height:10px"></span>
+
+        <input id="button2" type='button' value='Clear Heat Map'
+          style="width:120px;" onclick="Button2_Click();"></input>
+        <div style="width:2px; display:inline-block"></div> 
+        <input id="textbox2" type='text' size='16' value=' (not used) '> 
+          </input><br/>
+        <span style="display:block; height:10px"></span>
+       <textarea id='msgArea' rows="34" cols="36" style="font-family:Consolas;
+         font-size:12px"></textarea>
+    </div>
+    <div style="float:left; width:10px; height:600px"></div>
+    <div id='mapDiv' style="float:left; width:700px; height:600px;
+      border:1px solid red;"></div>
+    <br style="clear: left;" />
+
+   <script type='text/javascript'
+     src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap'
+     async defer>
+    </script>
+
+  </body>
+</html>

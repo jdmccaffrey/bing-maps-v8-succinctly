@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<!-- HelloWorldDemo.html -->
+
+<html>
+  <head>
+    <title>Bing Maps 8 Hello World</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script type='text/javascript'>
+
+    var map = null;
+
+    function GetMap()
+    {
+      var options = {
+        credentials: "TheBingMapsKeyGoesHere",
+        center: new Microsoft.Maps.Location(35.00, -100.00),
+        mapTypeId: Microsoft.Maps.MapTypeId.road,
+        zoom: 2,
+        enableClickableLogo: false,
+        showCopyright: false
+      };
+
+      var mapDiv = document.getElementById("mapDiv");  // where to place map
+      map = new Microsoft.Maps.Map(mapDiv, options);   // create the map
+    }
+
+    </script>
+  </head>
+
+  <body style="background-color:aquamarine">
+    <h3>Bing Maps V8 Hello World</h3>
+    <div id='mapDiv' style='width:900px; height:600px;'></div>
+
+    <script type='text/javascript'
+      src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap'
+      async defer>
+    </script>
+
+  </body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<!-- PushpinsDemo.html -->
+
+<html>
+  <head>
+    <title>Bing Maps 8 Pushpins with Infoboxes</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <script type='text/javascript'>
+
+    var map = null;
+    var pushpins = [];
+    var infobox = null;
+    var ppLayer = null;
+
+    function GetMap()
+    {
+      var options = {
+        credentials: "Anw _ _ _ 3xt",
+        center: new Microsoft.Maps.Location(42.40, -71.30),
+        mapTypeId: Microsoft.Maps.MapTypeId.road,
+        zoom: 10,
+        enableClickableLogo: false,
+        showTermsLink: false
+      };
+
+      var mapDiv = document.getElementById("mapDiv");
+      map = new Microsoft.Maps.Map(mapDiv, options);
+
+      var ibOptions = { visible: false,
+        offset: new Microsoft.Maps.Point(0, 0) };
+      var ibLoc = new Microsoft.Maps.Location(0, 0);
+      infobox = new Microsoft.Maps.Infobox(ibLoc, ibOptions);
+      infobox.setMap(map);
+
+      ppLayer = new Microsoft.Maps.Layer();
+      var cpp = new Microsoft.Maps.Pushpin(map.getCenter(), null);
+      ppLayer.add(cpp);
+      map.layers.insert(ppLayer);
+    }
+
+    function WriteLn(txt)
+    {
+      var existing = msgArea.value;
+      msgArea.value = existing + txt + "\n";
+    }
+
+    function LatLonStr(loc)
+    {
+      var s = "(" + Number(loc.latitude).toFixed(2) + ", " +
+        Number(loc.longitude).toFixed(2) + ")";
+      return s;
+    }
+
+    function Button1_Click()
+    {
+      var f = file1.files[0];
+      var reader = new FileReader();
+      reader.onload = function(e) { 
+        WriteLn("Source data = \n");
+        var lines = reader.result.split('\n');
+        for (var i = 0; i < lines.length; ++i) {
+          var line = lines[i];
+          var tokens = line.split(',');
+          WriteLn(tokens[0] + " " + tokens[1] + " " +
+            tokens[2] + " " + tokens[3]);
+          var loc = new Microsoft.Maps.Location(tokens[0], tokens[1]);
+          var ppOptions = { icon: CreateCvsDot(6, tokens[3]),
+            anchor: new Microsoft.Maps.Point(6, 6),
+            subTitle: tokens[2] };
+
+          var pp = new Microsoft.Maps.Pushpin(loc, ppOptions);
+          pushpins[i] = pp;
+          Microsoft.Maps.Events.addHandler(pp, 'mouseover', ShowInfobox);
+          Microsoft.Maps.Events.addHandler(pp, 'mouseout', HideInfobox);
+        }
+        ppLayer.add(pushpins);
+        map.layers.insert(ppLayer);
+        WriteLn("");
+      }
+      reader.readAsText(f);
+    }
+
+    function CreateCvsDot(radius, clr)
+    {
+      var c = document.createElement('canvas');
+      c.width = 2 * radius;
+      c.height = 2 * radius;
+      var ctx = c.getContext("2d");
+      ctx.beginPath();
+      ctx.arc(radius,radius, radius, 0, 2 * Math.PI); 
+      ctx.fillStyle = clr;
+      ctx.fill();
+      return c.toDataURL();
+    }
+
+    function Button2_Click()
+    {
+      ppLayer.clear();
+    }
+
+    function ShowInfobox(e)
+    {
+      var loc = e.target.getLocation();
+      WriteLn('\nmouseover at \n' + loc);
+      infobox.setLocation(loc);
+      infobox.setOptions( { visible: true,
+        title: e.target.getSubTitle(),
+        description: LatLonStr(loc)
+      }); 
+    }
+
+    function HideInfobox(e)
+    {
+      WriteLn('mouseout at \n' + e.target.getLocation());
+      infobox.setOptions({ visible: false }); 
+    }
+
+    </script>
+  </head>
+
+  <body style="background-color:tan">
+    <div id='controlPanel' style="float:left; width:262px; height:580px;
+      border:1px solid green; padding:10px; background-color: beige">
+      
+      <input type="file" id="file1" size="24"></input> 
+      <span style="display:block; height:10px"></span> 
+
+      <input id="button1" type='button' style="width:125px;"
+        value='Place Pushpins' onclick="Button1_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox1" type='text' size='15' value=' (not used)'>
+        </input><br/>
+      <span style="display:block; height:10px"></span> 
+
+      <input id="button2" type='button' style="width:125px;"
+        value='Erase Pushpins' onclick="Button2_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox2" type='text' size='15' value=' (not used)'>
+        </input><br/>
+      <span style="display:block; height:10px"></span>
+
+      <textarea id='msgArea' rows="34" cols="36" style="font-family:Consolas;
+        font-size:12px"></textarea>
+    </div>
+
+    <div style="float:left; width:10px; height:600px"></div>
+    <div id='mapDiv' style="float:left; width:700px; height:600px;
+      border:1px solid red;"></div>
+    <br style="clear: left;" />
+ 
+    <script type='text/javascript'
+      src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap'
+      async defer>
+    </script>
+
+  </body>
+</html>
