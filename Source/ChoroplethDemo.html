@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<!-- ChoroplethDemo.html -->
+
+<html>
+  <head>
+    <title>Bing Maps 8 Choropleth Demo</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <script type='text/javascript'>
+
+    var map = null;
+    var ppLayer = null;
+    var statesLayer = null;
+
+    function GetMap()
+    {
+      var options = {
+        credentials: "Anw _ _ _ 3xt",
+        center: new Microsoft.Maps.Location(40.00, -96.00),
+        mapTypeId: Microsoft.Maps.MapTypeId.road,
+        zoom: 4,
+        enableClickableLogo: false,
+        showCopyright: false
+      };
+
+      var mapDiv = document.getElementById("mapDiv");
+      map = new Microsoft.Maps.Map(mapDiv, options);
+
+      ppLayer = new Microsoft.Maps.Layer();
+      var cpp= new Microsoft.Maps.Pushpin(map.getCenter(), null);
+      ppLayer.add(cpp);
+      map.layers.insert(ppLayer);
+      statesLayer = new Microsoft.Maps.Layer();
+    }
+
+    function WriteLn(txt)
+    {
+      var existing = msgArea.value;
+      msgArea.value = existing + txt + "\n";
+    }
+
+    function Button1_Click()
+    {
+      var paletteGreen = [ 'rgba(203, 238, 131, 0.7)',
+        'rgba(138, 174, 67, 0.7)', 'rgba(115, 150, 43, 0.7)',
+        'rgba(67, 102, 0, 0.7)' ];
+
+      WriteLn("Color palette = ");
+      for (var i = 0; i < paletteGreen.length; ++i) {
+        WriteLn(paletteGreen[i]);
+      }
+      var maxCount = textbox1.value;
+
+      Microsoft.Maps.loadModule('Microsoft.Maps.SpatialDataService',
+        function() {
+        var world = Microsoft.Maps.LocationRect.fromEdges(90, -180, -90, 180);
+                    
+        var queryOptions = {
+          queryUrl: 'https://spatial.virtualearth.net/REST/v1/data/' +
+            '755aa60032b24cb1bfb54e8a6d59c229/USCensus2010_States/States',
+          spatialFilter: {
+            spatialFilterType: 'intersects',
+            intersects: world
+          },
+          top: maxCount
+        };
+ 
+        Microsoft.Maps.SpatialDataService.QueryAPIManager.search(queryOptions,
+          map, function (data) {
+
+          WriteLn("\nData from SpatialDataService: \n");
+          for (var i = 0; i < data.length; ++i) {
+            // WriteLn(Object.keys(data[i].metadata));
+            var name = data[i].metadata.Name;
+            var pop = data[i].metadata.Population;
+
+            if (name == "Alaska" || name == "Hawaii") {
+              continue;
+            }
+            WriteLn(name + " " + pop);
+
+            data[i].setOptions({
+              fillColor: GetStateColor(pop, paletteGreen)
+            });
+
+            Microsoft.Maps.Events.addHandler(data[i], 'click', function (e) {
+              var n = e.target.metadata.Name;
+              var p = e.target.metadata.Population;
+              var a = e.target.metadata.Area_Land;
+              alert(n + '\nPopulation = ' + p + '\nArea = ' + a);
+            });
+          }
+                        
+          statesLayer.add(data);
+          map.layers.insert(statesLayer);
+        });
+      });
+    } // Button1_Click()
+
+    function GetStateColor(pop, palette)
+    {
+      if (pop < 2000000) {
+        return palette[0];
+      }
+      else if (pop < 5000000) {
+        return palette[1];
+      }
+      else if (pop < 8000000) {
+        return palette[2];
+      }
+      else {
+        return palette[3];
+      }
+    }
+    
+    function Button2_Click()
+    {
+      msgArea.value = "";
+    }
+
+    </script>
+  </head>
+
+  <body style="background-color:lightseagreen">
+    <div id='controlPanel' style="float:left; width:262px; height:580px;
+      border:1px solid green; padding:10px; background-color: beige">
+      <input id="button1" type='button' style="width:125px;"
+        value=' Color States' onclick="Button1_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox1" type='text' size='15' value='20'>
+        </input><br/>
+      <span style="display:block; height:10px"></span> 
+
+      <input id="button2" type='button' style="width:125px;"
+        value=' Clear Messages ' onclick="Button2_Click();"></input>
+      <div style="width:2px; display:inline-block"></div> 
+      <input id="textbox2" type='text' size='15' value=' (not used) '>
+        </input><br/>
+      <span style="display:block; height:10px"></span> 
+
+      <textarea id='msgArea' rows="36" cols="36" style="font-family:Consolas;
+        font-size:12px"></textarea>
+    </div>
+
+    <div style="float:left; width:10px; height:600px"></div>
+    <div id='mapDiv' style="float:left; width:700px; height:600px;
+      border:1px solid red;"></div>
+    <br style="clear: left;" />
+
+    <script type='text/javascript'
+      src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap'
+      async defer>
+    </script>
+
+  </body>
+</html>
